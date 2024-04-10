@@ -22,7 +22,7 @@ There are a couple rules behind these three actions.
 
 #### Making Withdrawals
 When making a withdrawal, the following rules apply.
-- A customer can withdraw no more than $200 in a single transaction.~~
+- A customer can withdraw no more than $200 in a single transaction.
 - A customer can withdraw no more than $400 in a single day. 
 - A customer can withdraw any amount that can be dispensed in $5 bills.
 - The customer cannot withdraw more than they have in their account, unless it is a credit account, in which case they cannot withdraw more than their credit limit.
