@@ -8,14 +8,18 @@ export async function WithdrawAmount(account: number, amount: number){
         throw new Error("Amount must be able to be dispensed in $5 bills. Please enter a different amount");
     }
     const getAccountQuery = "Select * from accounts where account_number = $1";
-    const queryRes = await RunQuery(getAccountQuery, [account]);
+    let queryRes;
+    try{
+        queryRes = await RunQuery(getAccountQuery, [account]);
+    } catch (err){
+        //Could add more expansive error handling here, like writing to an error table, notifying a support team, etc.
+        console.error(`Caught error getting account information for account ${account}`);
+        throw err;
+    }
     
     const balance = queryRes.rows[0].amount;
     const accountType = queryRes.rows[0].type;
     const creditLimit = queryRes.rows[0].credit_limit;
-    console.log(`Current balance: ${balance}`);
-    console.log(`Account type: ${accountType}`);
-    console.log(`Credit Limit: ${creditLimit}`);
 
     //check if amount requested exceeds limits based on account type
     if(accountType == 'credit'){
@@ -54,7 +58,14 @@ export async function WithdrawAmount(account: number, amount: number){
         SET amount = $1
         WHERE account_number = $2
     `;
-    const updateBalanceRes = await RunQuery(withdrawAmountQuery, [newBalance, account]);
+    let updateBalanceRes;
+    try{
+        updateBalanceRes =  await RunQuery(withdrawAmountQuery, [newBalance, account]);
+    } catch (err){
+        //Could add more expansive error handling here, like writing to an error table, notifying a support team, etc.
+        console.error(`Caught error withdrawing ${amount} from account ${account}`);
+        throw err;
+    }
 
     //Must insert into the transaction so this withdrawal can also be tracked for future withdrawals
     const insertTransactionQuery = `
@@ -63,6 +74,24 @@ export async function WithdrawAmount(account: number, amount: number){
         VALUES
         ($1, $2, 'withdrawal', current_date)
     `;
-    const insertTransactionRes = await RunQuery(insertTransactionQuery, [account, amount]);
+    let insertTransactionRes 
+    try{
+        insertTransactionRes = await RunQuery(insertTransactionQuery, [account, amount]);
+    } catch {
+        //Could add more expansive error handling here, like writing to an error table, notifying a support team, etc.
+        console.error(`Caught error inserting transaction ${amount} from account ${account}`);
+
+        //since we had an error recording the transaction, we need to reverse the previous insert
+        //in a real-world setting, I would have the UPDATE accounts and INSERT transactions lumped into a stored procedure so the rollback was a little more efficient
+        //but for the sake of time in this demo, I left it as individual queries and a comment explaining my thoughts.
+        //The obvious error of the way I've done things is that a withdrawal that succeeds at updating the new amount, but fails at both inserting the transaction entry
+        //and undoing the withdraw update would remove the money without recording a transaction (hence the need for an SP)
+        //I didn't see any rollback functionality in the Postgres package I was using, or if it even supports rollbacks (I'm more familiar with Oracle),
+        //but that could be another alternative: Don't commit until both the UPDATE and INSERT are both completed
+        try{
+            RunQuery(withdrawAmountQuery, [account, balance]);
+        }
+        throw err;
+    }
     console.log(`Successfully withdrew $${amount}. New balance for account ${account} is $${newBalance}`);
 }
