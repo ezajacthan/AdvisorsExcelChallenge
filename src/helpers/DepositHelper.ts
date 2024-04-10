@@ -37,11 +37,11 @@ export async function DepositAmount(account: number, amount: number){
         updateBalanceRes =  await RunQuery(depositAmountQuery, [newBalance, account]);
     } catch (err){
         //Could add more expansive error handling here, like writing to an error table, notifying a support team, etc.
-        console.error(`Caught error withdrawing ${amount} from account ${account}`);
+        console.error(`Caught error depositing ${amount} from account ${account}`);
         throw err;
     }
 
-    //Insert into the transaction so this deposit can also be tracked (not necessary as per requirements, but likely desired logging)
+    //Insert into the transaction table so this deposit can also be tracked (not necessary as per requirements, but likely desired logging)
     const insertTransactionQuery = `
         INSERT INTO transactions
         (account_number, amount, transaction_type, transaction_date)
@@ -68,7 +68,7 @@ export async function DepositAmount(account: number, amount: number){
             `;
             RunQuery(resetAmountQuery, [account, balance]);
         } catch (err) {
-            //Would notify team of uncaught balance issue so it can be rectified (only necessary until bug discussed previously is caught)
+            //Would notify team of uncaught balance issue so it can be rectified (only necessary until bug discussed previously is handled)
             throw err;
         }
     }

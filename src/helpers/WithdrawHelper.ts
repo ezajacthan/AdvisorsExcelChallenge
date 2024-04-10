@@ -98,7 +98,7 @@ export async function WithdrawAmount(account: number, amount: number){
                 `;
                 RunQuery(resetAmountQuery, [account, balance]);
             } catch (err) {
-                //Would notify team of uncaught balance issue so it can be rectified (only necessary until bug discussed previously is caught)
+                //Would notify team of uncaught balance issue so it can be rectified (only necessary until bug discussed previously is handled)
                 throw err;
             }
         }
