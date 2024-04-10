@@ -1,4 +1,4 @@
-import {RunQuery, initConnection, closeConnection} from "../utils/Database.js";
+import {RunQuery} from "../utils/Database.js";
 
 export async function CheckBalance(account: number){
     const getAccountQuery = "Select amount as balance from accounts where account_number = $1";

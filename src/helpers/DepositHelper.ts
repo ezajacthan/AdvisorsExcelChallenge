@@ -1,4 +1,4 @@
-import {RunQuery, initConnection, closeConnection} from "../utils/Database.js";
+import {RunQuery} from "../utils/Database.js";
 
 export async function DepositAmount(account: number, amount: number){
     if(amount > 1000){
