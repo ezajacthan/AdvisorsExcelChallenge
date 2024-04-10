@@ -89,8 +89,19 @@ export async function WithdrawAmount(account: number, amount: number){
         //but that could be another alternative: Don't commit until both the UPDATE and INSERT are both completed
         try{
             RunQuery(withdrawAmountQuery, [account, balance]);
+        }catch (err){
+            try{
+                const resetAmountQuery = `
+                    UPDATE accounts
+                    SET amount = $1
+                    WHERE account_number = $2
+                `;
+                RunQuery(resetAmountQuery, [account, balance]);
+            } catch (err) {
+                //Would notify team of uncaught balance issue so it can be rectified (only necessary until bug discussed previously is caught)
+                throw err;
+            }
         }
-        throw err;
     }
     console.log(`Successfully withdrew $${amount}. New balance for account ${account} is $${newBalance}`);
 }
