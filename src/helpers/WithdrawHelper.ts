@@ -1,5 +1,4 @@
 import {RunQuery, initConnection, closeConnection} from "../utils/Database.js";
-//TODO: add error handling to all queries
 
 export async function WithdrawAmount(account: number, amount: number){
     if(amount > 200){
