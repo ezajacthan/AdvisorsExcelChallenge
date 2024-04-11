@@ -12,7 +12,11 @@ export async function initConnection(){
   await client.connect();
 }
 
-export async function RunSelectQuery(query: string){
+export async function RunQuery(queryString: string, params?: any[]){
+  const query = {
+    text: queryString,
+    values: params
+  }
   return await client.query(query);
 }
 

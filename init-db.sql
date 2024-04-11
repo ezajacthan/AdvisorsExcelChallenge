@@ -1,4 +1,4 @@
--- CREATE TABLE
+-- CREATE ACCOUNTS TABLE
 DROP TABLE IF EXISTS accounts;
 CREATE TABLE accounts (
     account_number INTEGER PRIMARY KEY,
@@ -24,3 +24,16 @@ VALUES
     (7, 'Nancy Checking', 70000, 'checking', NULL),
     (8, 'Nancy Savings', 80000, 'savings', NULL),
     (9, 'Nancy Credit', -90000, 'credit', 100000);
+
+-- CREATE TRANSACTIONS TABLE
+DROP TABLE IF EXISTS transactions;
+CREATE TABLE transactions (
+    transaction_number serial PRIMARY KEY,
+    account_number INTEGER REFERENCES accounts(account_number) NOT NULL,
+    amount INTEGER NOT NULL,
+    transaction_type VARCHAR NOT NULL,
+    transaction_date DATE NOT NULL
+);
+
+ALTER TABLE transactions ADD CONSTRAINT verify_transaction_type
+CHECK (transaction_type IN ('withdrawal', 'deposit'));
