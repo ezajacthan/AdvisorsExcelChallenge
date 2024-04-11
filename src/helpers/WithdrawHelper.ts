@@ -1,4 +1,5 @@
 import {RunQuery} from "../utils/Database.js";
+import FatalError from "../types/FatalError.js";
 
 export async function WithdrawAmount(account: number, amount: number){
     if(amount > 200){
@@ -12,8 +13,7 @@ export async function WithdrawAmount(account: number, amount: number){
         queryRes = await RunQuery(getAccountQuery, [account]);
     } catch (err){
         //Could add more expansive error handling here, like writing to an error table, notifying a support team, etc.
-        console.error(`Caught error getting account information for account ${account}`);
-        throw err;
+        throw new FatalError(err.message);
     }
     
     const balance = queryRes.rows[0].amount;
@@ -47,7 +47,7 @@ export async function WithdrawAmount(account: number, amount: number){
     const withdrawLimitRes = await RunQuery(checkWithdrawLimitQuery, [account]);
     const withdrawAmount = withdrawLimitRes.rows[0].withdraw_amount;
     if(withdrawAmount >= 400){
-        throw new Error("Cannot withdraw more than $400 in a day. Please try again tomorrow, or try a different account");
+        throw new FatalError("Cannot withdraw more than $400 in a day. Please try again tomorrow, or try a different account");
     }
 
     //withdraw means updating the balance of that account to be current balance - withdrawal amount
@@ -62,8 +62,7 @@ export async function WithdrawAmount(account: number, amount: number){
         updateBalanceRes =  await RunQuery(withdrawAmountQuery, [newBalance, account]);
     } catch (err){
         //Could add more expansive error handling here, like writing to an error table, notifying a support team, etc.
-        console.error(`Caught error withdrawing ${amount} from account ${account}`);
-        throw err;
+        throw new FatalError(err.message);
     }
 
     //Must insert into the transaction so this withdrawal can also be tracked for future withdrawals
@@ -78,7 +77,6 @@ export async function WithdrawAmount(account: number, amount: number){
         insertTransactionRes = await RunQuery(insertTransactionQuery, [account, amount]);
     } catch {
         //Could add more expansive error handling here, like writing to an error table, notifying a support team, etc.
-        console.error(`Caught error inserting transaction ${amount} from account ${account}`);
 
         //since we had an error recording the transaction, we need to reverse the previous insert
         //in a real-world setting, I would have the UPDATE accounts and INSERT transactions lumped into a stored procedure so the rollback was a little more efficient
@@ -99,8 +97,10 @@ export async function WithdrawAmount(account: number, amount: number){
                 RunQuery(resetAmountQuery, [account, balance]);
             } catch (err) {
                 //Would notify team of uncaught balance issue so it can be rectified (only necessary until bug discussed previously is handled)
-                throw err;
+                //such as email with all transaction details (nodemailer works well for this), or logging to a table if DB space is no problem
+                //and long-term storage preferred
             }
+            throw new FatalError(err.message);
         }
     }
     console.log(`Successfully withdrew $${amount}. New balance for account ${account} is $${newBalance}`);
